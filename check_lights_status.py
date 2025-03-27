@@ -107,7 +107,13 @@ def call_api(token, image_paths):
         }
     }
     
+    start_time = time.time()  # Start timing the API call
     response = requests.post(API_URL, headers=headers, json=data)
+    end_time = time.time()  # End timing
+    
+    response_time = end_time - start_time
+    logger.info(f"API call completed in {response_time:.2f} seconds")
+    
     response.raise_for_status()
     return response.json()
 
@@ -118,7 +124,10 @@ def main():
         image_paths = ["gateway_image1.jpg", "gateway_image2.jpg", "gateway_image3.jpg"]
 
         # Get OAuth token
+        token_start = time.time()
         token = get_oauth_token()
+        token_end = time.time()
+        logger.info(f"Token acquisition took {(token_end - token_start):.2f} seconds")
 
         # Call the API with images to check light status
         api_response = call_api(token, image_paths)
@@ -128,4 +137,7 @@ def main():
         logger.error(f"Error: {e}")
 
 if __name__ == "__main__":
+    main_start = time.time()
     main()
+    main_end = time.time()
+    logger.info(f"Total execution time: {(main_end - main_start):.2f} seconds")
