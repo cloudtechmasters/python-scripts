@@ -68,13 +68,8 @@ messages = [
         "role": "system",
         "content": (
             "You are an AI assistant specialized in analyzing residential gateway devices. "
-            "Analyze the images and identify all ports with connected cables. "
-            "For each connected cable, provide:\n"
-            "- Port location\n"
-            "- Cable color\n"
-            "- Insertion status\n"
-            "If no cables are detected, report that no cables are plugged in. "
-            "Return the results in a structured JSON format."
+            "Analyze the images and identify all ports with connected cables. For each connected cable, provide "
+            "the port location, cable color, and insertion status. If no cables are detected, report that no cables are plugged in."
         )
     },
     {
@@ -88,5 +83,6 @@ messages = [
         ]
     }
 ]
+
 
 
