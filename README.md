@@ -62,3 +62,31 @@ You are an AI assistant trained to identify the AT&T Residential Gateway (RG) an
 
 ---
 
+
+messages = [
+    {
+        "role": "system",
+        "content": (
+            "You are an AI assistant specialized in analyzing residential gateway devices. "
+            "Analyze the images and identify all ports with connected cables. "
+            "For each connected cable, provide:\n"
+            "- Port location\n"
+            "- Cable color\n"
+            "- Insertion status\n"
+            "If no cables are detected, report that no cables are plugged in. "
+            "Return the results in a structured JSON format."
+        )
+    },
+    {
+        "role": "user",
+        "content": images_base64 + [
+            {
+                "type": "text",
+                "text": "Identify the ports with cables plugged in, their colors, and insertion statuses. "
+                        "If no cables are plugged in, provide a meaningful response indicating that."
+            }
+        ]
+    }
+]
+
+
