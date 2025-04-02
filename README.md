@@ -1,3 +1,10 @@
+## Bitwarden Configuration
+BITWARDEN_ACCESS_TOKEN=0.8c2a418d-5d62-4a91-a530-b2a600ae957b.uLBNwqoBzm6CetMeP9MEvM0oUUqCGQ:s9Rycp0+uecneTWiPsmhLw==
+
+# Base64-encoded Secret IDs
+SECRET_ID_USERNAME=OTI5MTlhN2YtYTc2ZC00NGJiLTk0MWMtYjJhNTAwZjhmYjgz
+SECRET_ID_PASSWORD=ZWYzY2FmMmItMjFjNS00MDM4LTg1ZDMtYjJiMzAwZTUyYTYw
+
 # python-scripts
 
 # Installing Required Packages for Python 2.7 (Deprecated)
