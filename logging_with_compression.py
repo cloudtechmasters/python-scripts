@@ -7,7 +7,6 @@ import time
 from datetime import datetime
 from functools import wraps
 
-# Configuration
 LOG_DIR = "logs"
 MAX_BYTES = 10 * 1024 * 1024  # 10MB
 BACKUP_COUNT = 1  # One rotated file per run, compressed to .gz
@@ -35,30 +34,46 @@ class GzipRotatingFileHandler(logging.handlers.RotatingFileHandler):
     """Rotates logs by size and compresses rotated files, logging to job logger."""
     def __init__(self, filename, maxBytes=0, backupCount=0, job_logger=None):
         filename = os.path.abspath(filename)
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        log_dir = os.path.dirname(filename)
-        if not os.access(log_dir, os.W_OK):
-            raise PermissionError(f"No write permission for {log_dir}")
-
+        try:
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            log_dir = os.path.dirname(filename)
+            if not os.access(log_dir, os.W_OK):
+                raise PermissionError(f"No write permission for {log_dir}")
+        except Exception as e:
+            if job_logger:
+                job_logger.error(f"Failed to create directory {os.path.dirname(filename)}: {e}")
+            raise
         super().__init__(filename, maxBytes=maxBytes, backupCount=backupCount)
         self.job_logger = job_logger  # Use job logger for compression events
 
     def doRollover(self):
-        """Rotate log file and compress the rotated file."""
-        super().doRollover()
-        old_log = f"{self.baseFilename}.1"
-        if os.path.exists(old_log):
-            compressed_log = f"{old_log}.gz"
-            try:
-                with open(old_log, "rb") as f_in:
-                    with gzip.open(compressed_log, "wb") as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-                if self.job_logger:
-                    self.job_logger.info(f"Compressed {old_log} to {compressed_log}")
-                os.remove(old_log)  # Delete .log.1 after successful compression
-            except (IOError, OSError) as e:
-                if self.job_logger:
-                    self.job_logger.error(f"Failed to compress {old_log}: {e}")
+        """Rotate log file and compress the rotated file if job succeeds."""
+        try:
+            # Close current stream and rotate manually
+            if self.stream:
+                self.stream.close()
+                self.stream = None
+            if os.path.exists(self.baseFilename):
+                rotated_log = f"{self.baseFilename}.1"
+                if os.path.exists(rotated_log):
+                    os.remove(rotated_log)  # Remove old .log.1 if it exists
+                os.rename(self.baseFilename, rotated_log)
+
+            # Check if the job was successful and only compress if successful
+            if os.path.exists(rotated_log):
+                compressed_log = f"{rotated_log}.gz"
+                try:
+                    with open(rotated_log, "rb") as f_in:
+                        with gzip.open(compressed_log, "wb") as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                    os.remove(rotated_log)  # Delete .log.1 after compression
+                except (IOError, OSError) as e:
+                    if self.job_logger:
+                        self.job_logger.error(f"Failed to compress {rotated_log}: {e}")
+        except Exception as e:
+            if self.job_logger:
+                self.job_logger.error(f"Error during rotation/compression: {e}")
+            raise
 
 def get_job_logger(job_name):
     """Creates a logger for a job run with a unique timestamped log file."""
