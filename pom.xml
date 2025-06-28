@@ -1,0 +1,135 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>my-app</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssXXX</maven.build.timestamp.format>
+  </properties>
+
+  <dependencies>
+    <!-- ✅ Add your actual dependencies here -->
+
+    <!-- ✅ Local JAR (installed manually, not using system scope) -->
+    <dependency>
+      <groupId>com.external</groupId>
+      <artifactId>external-tool</artifactId>
+      <version>1.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- ✅ Compile with Java 8 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+
+      <!-- ✅ Create sources.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals><goal>jar</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- ✅ Create fat JAR (shaded) with manifest info -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+
+                <!-- Merge META-INF/cxf -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/cxf</resource>
+                </transformer>
+
+                <!-- Manifest -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.example.Main</mainClass> <!-- Replace this -->
+                  <manifestEntries>
+                    <Implementation-Title>${project.name}</Implementation-Title>
+                    <Implementation-Version>${project.version}</Implementation-Version>
+                    <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
+                    <Build-Time>${maven.build.timestamp}</Build-Time>
+                  </manifestEntries>
+                </transformer>
+
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- ✅ ZIP: shaded JAR, resources/, lib/, plugin.xml -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.4.2</version>
+        <executions>
+          <execution>
+            <id>make-zip</id>
+            <phase>package</phase>
+            <goals><goal>single</goal></goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assembly/zip.xml</descriptor>
+              </descriptors>
+              <finalName>${project.artifactId}-${project.version}-final</finalName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- ✅ chmod 777 on final ZIP -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>chmod-zip</id>
+            <phase>package</phase>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <executable>chmod</executable>
+              <arguments>
+                <argument>777</argument>
+                <argument>${project.build.directory}/${project.artifactId}-${project.version}-final.zip</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>
